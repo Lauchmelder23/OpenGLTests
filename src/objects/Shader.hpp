@@ -13,9 +13,9 @@ public:
 
 	void Use();
 
-	void SetUniformInt(const char* uniform, int value);
-	void SetUniformFloat(const char* uniform, float value);
-	void SetUniformMat4(const char* uniform, const float* ptrToMatrix);
+	void SetUniformInt(const char* uniform, int value) const;
+	void SetUniformFloat(const char* uniform, float value) const;
+	void SetUniformMat4(const char* uniform, const float* ptrToMatrix) const;
 
 private:
 	unsigned int program;

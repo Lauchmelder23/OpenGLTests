@@ -1,4 +1,5 @@
 #include <iostream>
+#include <vector>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -11,9 +12,13 @@
 #include <imgui/imgui_impl_glfw.h>
 #include <imgui/imgui_impl_opengl3.h>
 
+#include "Camera.hpp"
 #include "Shader.hpp"
 #include "Texture.hpp"
 #include "Cube.hpp"
+
+int width = 800;
+int height = 800;
 
 void LogGlfwError(const char* message)
 {
@@ -46,15 +51,19 @@ void PrintVersionInfo()
 
 void FramebufferSizeCallback(GLFWwindow* window, int w, int h)
 {
+	width = w;
+	height = h;
 	glViewport(0, 0, w, h);
 }
 
 int main(int argc, char** argv)
 {
+	// Initialize ImGui
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO();
 
+	// Initialize GLFW
 	int success;
 	success = glfwInit();
 	if (!success)
@@ -77,129 +86,78 @@ int main(int argc, char** argv)
 
 	glfwMakeContextCurrent(window);
 
-	ImGui_ImplGlfw_InitForOpenGL(window, true);
-
+	// Load OpenGL Bindings
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 	{
 		std::cerr << "Failed to initialize GLAD" << std::endl;
 		return -1;
 	}
 
+	// Finally initialize ImGui
+	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init((char*)glGetString(GL_NUM_SHADING_LANGUAGE_VERSIONS));
-
 	ImGui::StyleColorsDark();
 
 	PrintVersionInfo();
 
+	// Set Viewport  and callbacks
 	glViewport(0, 0, 800, 800);
 	glfwSetFramebufferSizeCallback(window, FramebufferSizeCallback);
 
-	/*
-	Shader shader("basic.vert", "basic.frag");
-	Texture texture1("lauch.jpg");
-	Texture texture2("tomato.jpg");
-
-	shader.Use();
-	shader.SetUniformInt("texture1", 0);
-	shader.SetUniformInt("texture2", 1);
-
-	glm::mat4 model = glm::mat4(1.0f);
-	model = glm::translate(model, glm::vec3(0.f, -0.7f, 0.f));
-	model = glm::rotate(model, glm::radians(-55.f), glm::vec3(1.0f, 0.0f, 0.0f));
-
-	glm::mat4 view = glm::mat4(1.0f);
-	view = glm::translate(view, glm::vec3(0.f, 0.f, -3.f));
-
-	glm::mat4 projection = glm::mat4(1.0f);
-	projection = glm::perspective(glm::radians(45.f), 1.f, 0.1f, 100.0f);
-
-	shader.SetUniformMat4("model", glm::value_ptr(model));
-	shader.SetUniformMat4("view", glm::value_ptr(view));
-	shader.SetUniformMat4("projection", glm::value_ptr(projection));
-
-	float vertices[4 * (3 + 3 + 2)] = {
-		// Position				//Color			// Texture
-		-0.5f,  0.5f, 1.0f,		0.3f, 1.0f, 0.6f,	0.0f, 1.0f,
-		 0.5f,  0.5f, 1.0f,		0.8f, 0.1f, 0.5f,	1.0f, 1.0f,
-		 0.5f, -0.5f, 1.0f,		0.5f, 0.6f, 0.2f,	1.0f, 0.0f,
-		-0.5f, -0.5f, 1.0f,		0.2f, 0.7f, 0.8f,	0.0f, 0.0f,
-	};
-
-	unsigned int indices[2 * 3] = {
-		0, 1, 3,
-		1, 2, 3
-	};
-
-	unsigned int VAO, VBO, EBO;
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
-	glGenBuffers(1, &EBO);
-
-	glBindVertexArray(VAO);
-
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, (3 + 3 + 2) * sizeof(float), (void*)0);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, (3 + 3 + 2) * sizeof(float), (void*)(3 * sizeof(float)));
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, (3 + 3 + 2) * sizeof(float), (void*)(6 * sizeof(float)));
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-	glEnableVertexAttribArray(2);
-
-	*/
-
 	Shader cubeShader("cube.vert", "cube.frag");
-	Texture cubeTexture("crate.jpg");
 	cubeShader.Use();
-
-	glm::mat4 model = glm::mat4(1.0f);
-
-	glm::mat4 view = glm::mat4(1.0f);
 
 	glm::mat4 perspective = glm::mat4(1.0f);
 
-	cubeShader.SetUniformMat4("model", glm::value_ptr(model));
-	cubeShader.SetUniformMat4("view", glm::value_ptr(view));
-
+	Texture cubeTexture("crate.jpg");
 	cubeShader.SetUniformInt("lauch", 0);
-
-	Cube cube(0.0f, 0.0f, 0.0f, 0.5f);
 
 	glm::vec3 cubePositions[] = {
 		glm::vec3(0.0f,  0.0f,  0.0f),
-		glm::vec3(2.0f,  5.0f, -15.0f),
+		glm::vec3(2.0f,  5.0f, -7.0f),
 		glm::vec3(-1.5f, -2.2f, -2.5f),
-		glm::vec3(-3.8f, -2.0f, -12.3f),
-		glm::vec3(2.4f, -0.4f, -3.5f),
+		glm::vec3(-3.8f, -2.0f, 6.3f),
+		glm::vec3(2.4f, -0.4f, 3.5f),
 		glm::vec3(-1.7f,  3.0f, -7.5f),
-		glm::vec3(1.3f, -2.0f, -2.5f),
+		glm::vec3(1.3f, -2.0f, 2.5f),
 		glm::vec3(1.5f,  2.0f, -2.5f),
 		glm::vec3(1.5f,  0.2f, -1.5f),
-		glm::vec3(-1.3f,  1.0f, -1.5f)
+		glm::vec3(-1.3f,  1.0f, 1.5f)
 	};
 
+	std::vector<Cube*> cubes;
+	for (int i = 0; i < 10; i++)
+	{
+		Cube* newCube = new Cube(cubePositions[i], glm::vec3(0.5f));
+		newCube->Rotate(glm::radians(20.0f * i), glm::vec3(1.0f, 0.3f, 0.5f));
+
+		cubes.push_back(newCube);
+	}
+
+	// A camera
+	Camera cam(glm::vec3(0.0f, 0.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+
+	// So that stuff isnt clipping through each other
 	glEnable(GL_DEPTH_TEST);
+
+
+
 
 	while (!glfwWindowShouldClose(window))
 	{
 		glfwPollEvents();
 
 		float t = glfwGetTime();
+
+		static float PI = glm::pi<float>();
+
 		static float fov = glm::radians(45.0f);
 		static float zNear = 0.1f;
 		static float zFar = 100.0f;
-		static float camX = 0.0f;
-		static float camY = 0.0f;
-		static float camZ = -3.0f;
-		static float yaw = 0.0f;
-		static float pitch = 0.0f;
-		static float roll = 0.0f;
-		//model = glm::rotate(model, glm::radians(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
 
+		static float orbitSpeed = 1.0f;
+		static float orbitRadius = 10.0f;
+		
 		glClearColor(0.1f, 0.4f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -217,40 +175,25 @@ int main(int argc, char** argv)
 			ImGui::SliderFloat("zFar", &zFar, 10.0f, 100.0f);
 		}
 
-		if (ImGui::CollapsingHeader("View"))
+		if (ImGui::CollapsingHeader("Orbit"))
 		{
-			ImGui::SliderFloat("CamX", &camX, -2.0f, 2.0f);
-			ImGui::SliderFloat("CamY", &camY, -2.0f, 2.0f);
-			ImGui::SliderFloat("CamZ", &camZ, -10.0f, 0.0f);
-			ImGui::Separator();
-			ImGui::SliderAngle("Yaw", &yaw, -45.0f, 45.0f, "%.0f°");
-			ImGui::SliderAngle("Pitch", &pitch, -45.0f, 45.0f, "%.0f°");
-			ImGui::SliderAngle("Roll", &roll, -45.0f, 45.0f, "%.0f°");
+			ImGui::SliderFloat("Speed", &orbitSpeed, 0.0f, 4 * PI, "%.2f rad/s");
+			ImGui::SliderFloat("Radius", &orbitRadius, 1.0f, 50.0f, "%.1f u");
 		}
 
 		ImGui::End();
 
-		perspective = glm::perspective(fov, 1.0f, zNear, zFar);
-		view = glm::mat4(1.0f);
-		view = glm::rotate(view, yaw, glm::vec3(0.f, 1.f, 0.f));
-		view = glm::rotate(view, pitch, glm::vec3(1.f, 0.f, 0.f));
-		view = glm::rotate(view, roll, glm::vec3(0.f, 0.f, 1.f));
-		view = glm::translate(view, glm::vec3(camX, camY, camZ));
+		perspective = glm::perspective(fov, (float)width/(float)height, zNear, zFar);
 
 		cubeTexture.Bind();
 		cubeShader.Use();
 		cubeShader.SetUniformMat4("projection", &perspective[0][0]);
-		cubeShader.SetUniformMat4("view", &view[0][0]);
 
-		for (int i = 0; i < 10; i++)
-		{
-			model = glm::mat4(1.0f);
-			model = glm::translate(model, cubePositions[i]);
-			model = glm::rotate(model, glm::radians(20.0f * i), glm::vec3(1.0f, 0.3f, 0.5f));
+		cam.SetPosition(orbitRadius * glm::vec3(cos(orbitSpeed * t), 0.0f, sin(orbitSpeed * t)));
+		cam.Use(cubeShader);
 
-			cubeShader.SetUniformMat4("model", &model[0][0]);
-			cube.Draw(cubeShader);
-		}
+		for (Cube* cube : cubes)
+			cube->Draw(cubeShader);
 
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

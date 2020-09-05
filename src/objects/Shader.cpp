@@ -96,17 +96,17 @@ void Shader::Use()
 	glUseProgram(program);
 }
 
-void Shader::SetUniformInt(const char* uniform, int value)
+void Shader::SetUniformInt(const char* uniform, int value) const
 {
 	glUniform1i(glGetUniformLocation(program, uniform), value);
 }
 
-void Shader::SetUniformFloat(const char* uniform, float value)
+void Shader::SetUniformFloat(const char* uniform, float value) const
 {
 	glUniform1f(glGetUniformLocation(program, uniform), value);
 }
 
-void Shader::SetUniformMat4(const char* uniform, const float* ptrToMatrix)
+void Shader::SetUniformMat4(const char* uniform, const float* ptrToMatrix) const
 {
 	glUniformMatrix4fv(glGetUniformLocation(program, uniform), 1, GL_FALSE, ptrToMatrix);
 }
