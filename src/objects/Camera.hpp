@@ -8,20 +8,24 @@ class Camera
 {
 public:
 	Camera() = default;
-	Camera(glm::vec3 position, glm::vec3 target);
+	Camera(glm::vec3 position, glm::vec3 direction);
+	Camera(glm::vec3 position, glm::vec2 pitchYaw);
 
 	void SetPosition(glm::vec3 newPos);
-	void SetTarget(glm::vec3 newTarget);
-
 	void Move(glm::vec3 movement);
 
+	void SetRotation(glm::vec2 pitchYaw);
+	void Rotate(glm::vec2 pitchYaw);
+
 	void Use(const Shader& program);
+
+public:
+	glm::vec3 front, up, right;
 
 private:
 	void CalculateCamera();
 
-	glm::vec3 position, target;
-	glm::vec3 direction, up, right;
+	glm::vec3 position, direction;
 
 	glm::mat4 viewMatrix;
 };

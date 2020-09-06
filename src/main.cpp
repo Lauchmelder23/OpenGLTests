@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <functional>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -19,6 +20,10 @@
 
 int width = 800;
 int height = 800;
+
+bool trapCursor = true;
+
+std::function<void(GLFWwindow*, float, float)> handleMouseCallback;
 
 void LogGlfwError(const char* message)
 {
@@ -54,6 +59,63 @@ void FramebufferSizeCallback(GLFWwindow* window, int w, int h)
 	width = w;
 	height = h;
 	glViewport(0, 0, w, h);
+}
+
+void CursorPosCallback(GLFWwindow* window, double x, double y)
+{
+	if (trapCursor)
+		handleMouseCallback(window, x, y);
+}
+
+void KeyCallback(GLFWwindow* window, int key, int mode, int action, int mods)
+{
+	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+	{
+		trapCursor = !trapCursor;
+		glfwSetInputMode(window, GLFW_CURSOR, (trapCursor ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL));
+		glfwSetCursorPos(window, width / 2, height / 2);
+	}
+}
+
+void HandleKeyboard(GLFWwindow* window, Camera& cam, float frametime)
+{
+	static float movementSpeed = 4.5f;
+
+	// Movement
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+		cam.Move(cam.front * movementSpeed * frametime);
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+		cam.Move(-cam.front * movementSpeed * frametime);
+
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+		cam.Move(-cam.right * movementSpeed * frametime);
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+		cam.Move(cam.right * movementSpeed * frametime);
+
+	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+		cam.Move(glm::vec3(0.0f, 1.0f, 0.0f) * movementSpeed * frametime);
+	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+		cam.Move(-glm::vec3(0.0f, 1.0f, 0.0f) * movementSpeed * frametime);
+}
+
+void HandleMouse(GLFWwindow* window, Camera* cam, float x, float y)
+{
+	static const float sensitivity = 0.1f;
+
+	static float pitch = 0.0f;
+	static float yaw = -90.0f;
+
+	pitch += (height / 2 - y) * sensitivity;
+	yaw += (x - width / 2) * sensitivity;
+
+	if (pitch > 89.0f)
+		pitch = 89.0f;
+	else if (pitch < -89.0f)
+		pitch = -89.0f;
+
+	cam->SetRotation(glm::vec2(pitch, yaw));
+	
+	glfwSetCursorPos(window, width / 2.0f, height / 2.0f);
 }
 
 int main(int argc, char** argv)
@@ -135,17 +197,26 @@ int main(int argc, char** argv)
 	}
 
 	// A camera
-	Camera cam(glm::vec3(0.0f, 0.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+	Camera cam(glm::vec3(0.0f, 0.0f, 10.0f), glm::vec2(0.0f, -90.0f));
 
-	// So that stuff isnt clipping through each other
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetCursorPos(window, width / 2, height / 2);
+	handleMouseCallback = std::bind(HandleMouse, std::placeholders::_1, &cam, std::placeholders::_2, std::placeholders::_3);
+	glfwSetCursorPosCallback(window, CursorPosCallback);
+	glfwSetKeyCallback(window, KeyCallback);
+
 	glEnable(GL_DEPTH_TEST);
 
 
-
+	float lastTime = glfwGetTime();
 
 	while (!glfwWindowShouldClose(window))
 	{
 		glfwPollEvents();
+
+		float currentTime = glfwGetTime();
+		HandleKeyboard(window, cam, currentTime - lastTime);
+		lastTime = currentTime;
 
 		float t = glfwGetTime();
 
@@ -175,12 +246,6 @@ int main(int argc, char** argv)
 			ImGui::SliderFloat("zFar", &zFar, 10.0f, 100.0f);
 		}
 
-		if (ImGui::CollapsingHeader("Orbit"))
-		{
-			ImGui::SliderFloat("Speed", &orbitSpeed, 0.0f, 4 * PI, "%.2f rad/s");
-			ImGui::SliderFloat("Radius", &orbitRadius, 1.0f, 50.0f, "%.1f u");
-		}
-
 		ImGui::End();
 
 		perspective = glm::perspective(fov, (float)width/(float)height, zNear, zFar);
@@ -188,8 +253,6 @@ int main(int argc, char** argv)
 		cubeTexture.Bind();
 		cubeShader.Use();
 		cubeShader.SetUniformMat4("projection", &perspective[0][0]);
-
-		cam.SetPosition(orbitRadius * glm::vec3(cos(orbitSpeed * t), 0.0f, sin(orbitSpeed * t)));
 		cam.Use(cubeShader);
 
 		for (Cube* cube : cubes)
