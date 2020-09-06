@@ -2,20 +2,8 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
-Camera::Camera(glm::vec3 position, glm::vec3 direction) :
-	position(position), direction(direction)
-{
-	CalculateCamera();
-}
-
 Camera::Camera(glm::vec3 position, glm::vec2 pitchYaw) :
-	position(position), direction(
-		glm::vec3(
-			cos(glm::radians(pitchYaw.y)) * cos(glm::radians(pitchYaw.x)),
-			sin(glm::radians(pitchYaw.x)),
-			sin(glm::radians(pitchYaw.y)) * cos(glm::radians(pitchYaw.x))
-		)
-	)
+	position(position), rotation(pitchYaw)
 {
 	CalculateCamera();
 }
@@ -34,22 +22,23 @@ void Camera::Move(glm::vec3 movement)
 
 void Camera::SetRotation(glm::vec2 pitchYaw)
 {
-	direction = glm::vec3(
-		cos(glm::radians(pitchYaw.y)) * cos(glm::radians(pitchYaw.x)),
-		sin(glm::radians(pitchYaw.x)),
-		sin(glm::radians(pitchYaw.y)) * cos(glm::radians(pitchYaw.x))
-	);
+	rotation = pitchYaw;
 	CalculateCamera();
 }
 
 void Camera::Rotate(glm::vec2 pitchYaw)
 {
-	direction += glm::vec3(
-		cos(glm::radians(pitchYaw.y)) * cos(glm::radians(pitchYaw.x)),
-		sin(glm::radians(pitchYaw.x)),
-		sin(glm::radians(pitchYaw.y)) * cos(glm::radians(pitchYaw.x))
-	);
+	rotation += pitchYaw;
+	if (rotation.x > 89.0f)
+		rotation.x = 89.0f;
+	else if (rotation.x < -89.0f)
+		rotation.x = -89.0f;
 	CalculateCamera();
+}
+
+void Camera::Constrain(glm::vec4 constraints)
+{
+	rotationConstraints = constraints;
 }
 
 void Camera::Use(const Shader& program)
@@ -59,9 +48,12 @@ void Camera::Use(const Shader& program)
 
 void Camera::CalculateCamera()
 {
-	front = glm::normalize(direction);
+	front = glm::normalize(glm::vec3(
+		cos(glm::radians(rotation.y)) * cos(glm::radians(rotation.x)),
+		sin(glm::radians(rotation.x)),
+		sin(glm::radians(rotation.y)) * cos(glm::radians(rotation.x))
+	));
 	right = glm::normalize(glm::cross(front, glm::vec3(0.0f, 1.0f, 0.0f)));
-	// right = glm::normalize(glm::cross(glm::vec3(0.0f, 1.0f, 0.0f), front));
 	up = glm::cross(right, front);
 
 	viewMatrix = glm::lookAt(position, position + front, up);

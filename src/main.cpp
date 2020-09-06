@@ -23,6 +23,9 @@ int height = 800;
 
 bool trapCursor = true;
 
+float movementSpeed = 6.0f;
+float sensitivity = 0.1f;
+
 std::function<void(GLFWwindow*, float, float)> handleMouseCallback;
 
 void LogGlfwError(const char* message)
@@ -64,7 +67,7 @@ void FramebufferSizeCallback(GLFWwindow* window, int w, int h)
 void CursorPosCallback(GLFWwindow* window, double x, double y)
 {
 	if (trapCursor)
-		handleMouseCallback(window, x, y);
+		handleMouseCallback(window, (float)x, (float)y);
 }
 
 void KeyCallback(GLFWwindow* window, int key, int mode, int action, int mods)
@@ -79,13 +82,11 @@ void KeyCallback(GLFWwindow* window, int key, int mode, int action, int mods)
 
 void HandleKeyboard(GLFWwindow* window, Camera& cam, float frametime)
 {
-	static float movementSpeed = 4.5f;
-
 	// Movement
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-		cam.Move(cam.front * movementSpeed * frametime);
+		cam.Move(glm::normalize(glm::vec3(cam.front.x, 0.0f, cam.front.z)) * movementSpeed * frametime);
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-		cam.Move(-cam.front * movementSpeed * frametime);
+		cam.Move(-glm::normalize(glm::vec3(cam.front.x, 0.0f, cam.front.z)) * movementSpeed * frametime);
 
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
 		cam.Move(-cam.right * movementSpeed * frametime);
@@ -100,20 +101,7 @@ void HandleKeyboard(GLFWwindow* window, Camera& cam, float frametime)
 
 void HandleMouse(GLFWwindow* window, Camera* cam, float x, float y)
 {
-	static const float sensitivity = 0.1f;
-
-	static float pitch = 0.0f;
-	static float yaw = -90.0f;
-
-	pitch += (height / 2 - y) * sensitivity;
-	yaw += (x - width / 2) * sensitivity;
-
-	if (pitch > 89.0f)
-		pitch = 89.0f;
-	else if (pitch < -89.0f)
-		pitch = -89.0f;
-
-	cam->SetRotation(glm::vec2(pitch, yaw));
+	cam->Rotate(sensitivity * glm::vec2((height / 2 - y), (x - width / 2)));
 	
 	glfwSetCursorPos(window, width / 2.0f, height / 2.0f);
 }
@@ -208,26 +196,21 @@ int main(int argc, char** argv)
 	glEnable(GL_DEPTH_TEST);
 
 
-	float lastTime = glfwGetTime();
+	float lastTime = (float)glfwGetTime();
 
 	while (!glfwWindowShouldClose(window))
 	{
 		glfwPollEvents();
 
-		float currentTime = glfwGetTime();
+		float currentTime = (float)glfwGetTime();
 		HandleKeyboard(window, cam, currentTime - lastTime);
 		lastTime = currentTime;
-
-		float t = glfwGetTime();
 
 		static float PI = glm::pi<float>();
 
 		static float fov = glm::radians(45.0f);
 		static float zNear = 0.1f;
 		static float zFar = 100.0f;
-
-		static float orbitSpeed = 1.0f;
-		static float orbitRadius = 10.0f;
 		
 		glClearColor(0.1f, 0.4f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -244,6 +227,12 @@ int main(int argc, char** argv)
 			ImGui::SliderAngle("FOV", &fov, 10.0f, 120.0f, "%.0f°");
 			ImGui::SliderFloat("zNear", &zNear, 0.1f, 10.0f);
 			ImGui::SliderFloat("zFar", &zFar, 10.0f, 100.0f);
+		}
+
+		if (ImGui::CollapsingHeader("Movement"))
+		{
+			ImGui::SliderFloat("Speed", &movementSpeed, 0.01f, 10.0f);
+			ImGui::SliderFloat("Sensitivity", &sensitivity, 0.01, 10.0f);
 		}
 
 		ImGui::End();

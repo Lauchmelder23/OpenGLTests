@@ -4,11 +4,11 @@
 
 #include "Shader.hpp"
 
+// TODO: reimplement, make it better
 class Camera
 {
 public:
 	Camera() = default;
-	Camera(glm::vec3 position, glm::vec3 direction);
 	Camera(glm::vec3 position, glm::vec2 pitchYaw);
 
 	void SetPosition(glm::vec3 newPos);
@@ -16,6 +16,8 @@ public:
 
 	void SetRotation(glm::vec2 pitchYaw);
 	void Rotate(glm::vec2 pitchYaw);
+
+	void Constrain(glm::vec4 constraints);
 
 	void Use(const Shader& program);
 
@@ -25,7 +27,9 @@ public:
 private:
 	void CalculateCamera();
 
-	glm::vec3 position, direction;
+	glm::vec3 position;
+	glm::vec2 rotation;
+	glm::vec4 rotationConstraints;
 
 	glm::mat4 viewMatrix;
 };
