@@ -1,0 +1,34 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+../vendor/include/KHR/khrplatform.h
+stdint.h
+-
+inttypes.h
+-
+stdint.h
+-
+
+../vendor/include/glad/glad.h
+KHR/khrplatform.h
+-
+
+/home/builder/projects/OpenGLTests/src/objects/Shader.cpp
+Shader.hpp
+/home/builder/projects/OpenGLTests/src/objects/Shader.hpp
+iostream
+-
+fstream
+-
+cstring
+-
+glad/glad.h
+-
+
+/home/builder/projects/OpenGLTests/src/objects/Shader.hpp
+

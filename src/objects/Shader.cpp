@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <cstring>
 
 #include <glad/glad.h>
 
@@ -28,7 +29,7 @@ void Shader::LoadShaderSource(const char* filepath, char** buffer)
 		return;
 	}
 
-	memcpy_s(*buffer, size, source.c_str(), size);
+	memcpy(*buffer, source.c_str(), size);
 	(*buffer)[size] = '\0';
 }
 
