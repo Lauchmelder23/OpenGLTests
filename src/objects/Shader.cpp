@@ -91,7 +91,7 @@ Shader::~Shader()
 	glDeleteProgram(program);
 }
 
-void Shader::Use()
+void Shader::Use() const
 {
 	glUseProgram(program);
 }
@@ -104,6 +104,11 @@ void Shader::SetUniformInt(const char* uniform, int value) const
 void Shader::SetUniformFloat(const char* uniform, float value) const
 {
 	glUniform1f(glGetUniformLocation(program, uniform), value);
+}
+
+void Shader::SetUniformFloat3(const char* uniform, const float* ptrToVec3) const
+{
+	glUniform3f(glGetUniformLocation(program, uniform), ptrToVec3[0], ptrToVec3[1], ptrToVec3[2]);
 }
 
 void Shader::SetUniformMat4(const char* uniform, const float* ptrToMatrix) const

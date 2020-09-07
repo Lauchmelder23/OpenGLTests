@@ -13,6 +13,7 @@
 #include <imgui/imgui_impl_glfw.h>
 #include <imgui/imgui_impl_opengl3.h>
 
+#include "lighting/PointLight.hpp"
 #include "Camera.hpp"
 #include "Shader.hpp"
 #include "Texture.hpp"
@@ -154,13 +155,12 @@ int main(int argc, char** argv)
 	glViewport(0, 0, 800, 800);
 	glfwSetFramebufferSizeCallback(window, FramebufferSizeCallback);
 
-	Shader cubeShader("cube.vert", "cube.frag");
-	cubeShader.Use();
-
 	glm::mat4 perspective = glm::mat4(1.0f);
 
+	Shader singleColorShader("singleColor.vert", "singleColor.frag");
+	Shader texturedShader("textured.vert", "textured.frag");
+
 	Texture cubeTexture("crate.jpg");
-	cubeShader.SetUniformInt("lauch", 0);
 
 	glm::vec3 cubePositions[] = {
 		glm::vec3(0.0f,  0.0f,  0.0f),
@@ -183,6 +183,8 @@ int main(int argc, char** argv)
 
 		cubes.push_back(newCube);
 	}
+
+	PointLight lightSource(glm::vec3(0.0f, 3.0f, 0.0f), glm::vec3(0.5f, 0.1f, 0.1f), 1.0f);
 
 	// A camera
 	Camera cam(glm::vec3(0.0f, 0.0f, 10.0f), glm::vec2(0.0f, -90.0f));
@@ -212,7 +214,9 @@ int main(int argc, char** argv)
 		static float zNear = 0.1f;
 		static float zFar = 100.0f;
 		
-		glClearColor(0.1f, 0.4f, 0.1f, 1.0f);
+		static float bgColor[3] = { 0.1f, 0.4f, 0.1f };
+		
+		glClearColor(bgColor[0], bgColor[1], bgColor[2], 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		ImGui_ImplOpenGL3_NewFrame();
@@ -235,17 +239,27 @@ int main(int argc, char** argv)
 			ImGui::SliderFloat("Sensitivity", &sensitivity, 0.01, 10.0f);
 		}
 
+		if (ImGui::CollapsingHeader("Scene"))
+		{
+			ImGui::ColorPicker3("Background", bgColor);
+		}
+
 		ImGui::End();
 
 		perspective = glm::perspective(fov, (float)width/(float)height, zNear, zFar);
 
 		cubeTexture.Bind();
-		cubeShader.Use();
-		cubeShader.SetUniformMat4("projection", &perspective[0][0]);
-		cam.Use(cubeShader);
 
+		texturedShader.Use();
+		texturedShader.SetUniformMat4("projection", &perspective[0][0]);
+		cam.Use(texturedShader);
 		for (Cube* cube : cubes)
-			cube->Draw(cubeShader);
+			cube->Draw(texturedShader);
+
+		singleColorShader.Use();
+		singleColorShader.SetUniformMat4("projection", &perspective[0][0]);
+		cam.Use(singleColorShader);
+		lightSource.Draw(singleColorShader);
 
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
