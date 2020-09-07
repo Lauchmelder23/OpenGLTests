@@ -56,7 +56,7 @@ PointLight::PointLight(glm::vec3 position, glm::vec3 color, float intensity) :
 	}
 
 	transformation = glm::translate(transformation, position);
-	transformation = glm::scale(transformation, glm::vec3(0.1f));
+	transformation = glm::scale(transformation, glm::vec3(0.05f));
 }
 
 void PointLight::Draw(const Shader& program)
