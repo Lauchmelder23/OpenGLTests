@@ -146,7 +146,7 @@ int main(int argc, char** argv)
 
 	// Finally initialize ImGui
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
-	ImGui_ImplOpenGL3_Init((char*)glGetString(GL_NUM_SHADING_LANGUAGE_VERSIONS));
+	ImGui_ImplOpenGL3_Init((char*)glGetString(GL_SHADING_LANGUAGE_VERSION));
 	ImGui::StyleColorsDark();
 
 	PrintVersionInfo();
