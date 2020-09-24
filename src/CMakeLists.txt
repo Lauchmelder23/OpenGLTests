@@ -28,7 +28,6 @@ target_include_directories(example PRIVATE
 
 target_link_libraries(example
 	glfw
-	GL
 	${CMAKE_DL_LIBS}
 )
 
