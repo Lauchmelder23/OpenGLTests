@@ -59,6 +59,11 @@ PointLight::PointLight(glm::vec3 position, glm::vec3 color, float intensity) :
 	transformation = glm::scale(transformation, glm::vec3(0.05f));
 }
 
+void PointLight::Use(const Shader& program)
+{
+	program.SetUniformFloat3("lightColor", &color[0]);
+}
+
 void PointLight::Draw(const Shader& program)
 {
 	program.SetUniformFloat3("color", &color[0]);

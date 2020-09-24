@@ -13,6 +13,8 @@ public:
 	PointLight(glm::vec3 position, glm::vec3 color, float intensity);
 	~PointLight() = default;
 
+	void Use(const Shader& program);
+
 	void Draw(const Shader& program);
 
 private:

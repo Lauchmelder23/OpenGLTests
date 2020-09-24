@@ -252,6 +252,7 @@ int main(int argc, char** argv)
 
 		texturedShader.Use();
 		texturedShader.SetUniformMat4("projection", &perspective[0][0]);
+		lightSource.Use(texturedShader);
 		cam.Use(texturedShader);
 		for (Cube* cube : cubes)
 			cube->Draw(texturedShader);

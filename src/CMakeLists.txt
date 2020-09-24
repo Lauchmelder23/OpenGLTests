@@ -3,7 +3,7 @@ set(VENDOR ${CMAKE_SOURCE_DIR}/vendor)
 
 add_executable(example
 	"main.cpp"
-    "objects/lighting/PointLight.cpp")
+    "objects/lighting/PointLight.cpp" "objects/lighting/AmbientLight.cpp")
 
 file(GLOB SOURCE_FILES
 	"${VENDOR}/src/*.c"
